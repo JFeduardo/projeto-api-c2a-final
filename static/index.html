@@ -1,0 +1,417 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>NDD Print · NOC Monitor</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  body { font-family: 'IBM Plex Sans', system-ui, sans-serif; background:#0a0e14; }
+  .font-mono-custom { font-family: 'IBM Plex Mono', monospace; }
+  .grid-bg {
+    position: fixed; inset: 0; z-index: 0; pointer-events:none;
+    background-image: linear-gradient(#1c2330 1px, transparent 1px), linear-gradient(90deg, #1c2330 1px, transparent 1px);
+    background-size: 44px 44px; opacity:.35;
+    mask-image: radial-gradient(ellipse at center, black 0%, transparent 80%);
+  }
+  .pulse-dot { animation: pulse 2s ease-out infinite; }
+  @keyframes pulse {
+    0% { box-shadow: 0 0 0 0 rgba(52,211,153,.5); }
+    70% { box-shadow: 0 0 0 9px rgba(52,211,153,0); }
+    100% { box-shadow: 0 0 0 0 rgba(52,211,153,0); }
+  }
+  ::-webkit-scrollbar { width: 8px; height: 8px; }
+  ::-webkit-scrollbar-thumb { background:#232a38; border-radius: 4px; }
+  ::-webkit-scrollbar-button { display: none; width: 0; height: 0; }
+  ::-webkit-scrollbar-corner { background: transparent; }
+  #enterprise-tabs { scrollbar-width: none; -ms-overflow-style: none; overflow-x: hidden; }
+  #enterprise-tabs::-webkit-scrollbar { display: none; }
+</style>
+</head>
+<body class="text-slate-100 min-h-screen overflow-x-hidden">
+<div class="grid-bg"></div>
+
+<header class="relative z-10 flex items-center justify-between px-8 py-4 border-b border-slate-800 bg-slate-950/60">
+  <div class="flex items-center gap-3">
+    <span id="conn-dot" class="w-3 h-3 rounded-full bg-slate-600"></span>
+    <h1 class="font-mono-custom text-xl font-bold tracking-wider">NDD PRINT <span class="text-slate-500">/</span> NOC</h1>
+  </div>
+  <div class="flex items-center gap-10">
+    <div class="text-right">
+      <div class="text-xs text-slate-400 uppercase tracking-wider">Impressoras</div>
+      <div id="stat-total" class="font-mono-custom text-2xl font-semibold">—</div>
+    </div>
+    <div id="clock" class="font-mono-custom text-2xl font-semibold text-sky-400 w-36 text-right">--:--:--</div>
+  </div>
+</header>
+
+<div id="error-banner" class="relative z-10 hidden bg-amber-500/10 text-amber-400 text-xs font-mono-custom text-center py-2 border-b border-slate-800"></div>
+
+<div id="progress-banner" class="relative z-10 hidden bg-sky-500/10 border-b border-slate-800 py-2 px-8">
+  <div class="flex items-center justify-between text-xs font-mono-custom text-sky-400 mb-1">
+    <span>Coletando dados da API do NDD...</span>
+    <span id="progress-text">0 / 0 instituicoes</span>
+  </div>
+  <div class="w-full h-1.5 bg-slate-800 rounded-full overflow-hidden">
+    <div id="progress-bar" class="h-full bg-sky-400 transition-all duration-300" style="width: 0%"></div>
+  </div>
+</div>
+
+<main class="relative z-10 px-7 py-5 space-y-4">
+
+  <!-- KPIs -->
+  <section class="grid grid-cols-2 md:grid-cols-5 gap-4">
+    <div class="bg-slate-900 border border-slate-800 border-l-4 border-l-emerald-400 rounded-lg p-4">
+      <div class="text-xs text-slate-400 uppercase tracking-wider mb-1">Online</div>
+      <div id="kpi-online" class="font-mono-custom text-3xl font-bold">0</div>
+      <div id="kpi-online-pct" class="text-xs text-slate-500 font-mono-custom mt-1">0%</div>
+    </div>
+    <div class="bg-slate-900 border border-slate-800 border-l-4 border-l-rose-400 rounded-lg p-4">
+      <div class="text-xs text-slate-400 uppercase tracking-wider mb-1">Offline</div>
+      <div id="kpi-offline" class="font-mono-custom text-3xl font-bold">0</div>
+      <div id="kpi-offline-pct" class="text-xs text-slate-500 font-mono-custom mt-1">0%</div>
+    </div>
+    <div class="bg-slate-900 border border-slate-800 border-l-4 border-l-sky-400 rounded-lg p-4">
+      <div class="text-xs text-slate-400 uppercase tracking-wider mb-1">Paginas (hoje)</div>
+      <div id="kpi-pages" class="font-mono-custom text-3xl font-bold">0</div>
+      <div class="text-xs text-slate-500 font-mono-custom mt-1"><span id="kpi-mono">0</span> PB · <span id="kpi-color">0</span> cor</div>
+    </div>
+    <div class="bg-slate-900 border border-slate-800 border-l-4 border-l-amber-400 rounded-lg p-4">
+      <div class="text-xs text-slate-400 uppercase tracking-wider mb-1">Alertas abertos</div>
+      <div id="kpi-alerts" class="font-mono-custom text-3xl font-bold">0</div>
+      <div class="text-xs text-slate-500 font-mono-custom mt-1">eventos ativos</div>
+    </div>
+    <div class="bg-slate-900 border border-slate-800 border-l-4 border-l-amber-400 rounded-lg p-4">
+      <div class="text-xs text-slate-400 uppercase tracking-wider mb-1">Estoques</div>
+      <div id="kpi-stocks" class="font-mono-custom text-3xl font-bold">0</div>
+      <div class="text-xs text-slate-500 font-mono-custom mt-1">monitorados</div>
+    </div>
+  </section>
+
+  <!-- Impressoras: agora e o bloco principal, ocupando a largura toda,
+       com a selecao de instituicoes como uma coluna lateral em vez de
+       abas por cima da tabela. -->
+  <section class="bg-slate-900 border border-slate-800 rounded-lg flex flex-col">
+    <div class="px-5 py-3 border-b border-slate-800 flex items-center justify-between">
+      <h2 class="text-sm font-semibold uppercase tracking-wider text-slate-400">Impressoras</h2>
+      <span class="text-xs text-slate-500 font-mono-custom">verde=online · vermelho=offline · amarelo=suspensa</span>
+    </div>
+    <div class="flex flex-1 min-h-0">
+      <!-- Coluna lateral de instituicoes -->
+      <div id="enterprise-tabs" class="w-56 shrink-0 border-r border-slate-800 overflow-y-scroll py-2 px-2 space-y-0.5 h-[70vh]"></div>
+      <!-- Tabela de impressoras -->
+      <div class="flex-1 overflow-auto h-[70vh]">
+        <table class="w-full text-sm">
+          <thead class="sticky top-0 bg-slate-900 text-slate-500 text-xs uppercase tracking-wider">
+            <tr>
+              <th class="text-left font-medium px-5 py-2">Status</th>
+              <th class="text-left font-medium px-2 py-2">Nome</th>
+              <th class="text-left font-medium px-2 py-2">Instituicao</th>
+              <th class="text-left font-medium px-2 py-2">Local</th>
+              <th class="text-left font-medium px-2 py-2">IP</th>
+              <th class="text-right font-medium px-5 py-2">Paginas (hoje)</th>
+            </tr>
+          </thead>
+          <tbody id="printer-rows" class="divide-y divide-slate-800/60"></tbody>
+        </table>
+        <div id="printers-empty" class="hidden text-center text-slate-500 text-sm py-10">Nenhuma impressora carregada ainda.</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Feed de eventos: agora abaixo das impressoras, em largura total. -->
+  <section class="bg-slate-900 border border-slate-800 rounded-lg flex flex-col max-h-80">
+    <div class="px-5 py-3 border-b border-slate-800">
+      <h2 class="text-sm font-semibold uppercase tracking-wider text-slate-400">Feed de eventos</h2>
+    </div>
+    <ul id="event-list" class="overflow-auto p-3 grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-2"></ul>
+    <div id="events-empty" class="hidden text-center text-slate-500 text-sm py-10">Nenhum alerta aberto.</div>
+  </section>
+
+  <!-- Estoque -->
+  <section class="bg-slate-900 border border-slate-800 rounded-lg">
+    <div class="px-5 py-3 border-b border-slate-800">
+      <h2 class="text-sm font-semibold uppercase tracking-wider text-slate-400">Suprimentos / Estoque</h2>
+    </div>
+    <div id="stock-grid" class="p-4"></div>
+    <div id="stocks-empty" class="hidden text-center text-slate-500 text-sm py-10">Nenhum estoque carregado ainda.</div>
+  </section>
+</main>
+
+<footer class="relative z-10 flex justify-between px-8 py-2 text-xs text-slate-500 font-mono-custom border-t border-slate-800">
+  <span id="status-text">Conectando...</span>
+  <span id="last-updated"></span>
+</footer>
+
+<script>
+const POLL_INTERVAL_MS = 15000; // ajuste fino do lado do frontend (o backend coleta a cada POLL_INTERVAL_SECONDS do .env)
+
+function fmt(n) { return new Intl.NumberFormat('pt-BR').format(n || 0); }
+function pct(part, total) { return total ? Math.round((part / total) * 100) + '%' : '0%'; }
+
+function tickClock() {
+  document.getElementById('clock').textContent = new Date().toLocaleTimeString('pt-BR');
+}
+tickClock(); setInterval(tickClock, 1000);
+
+let activeEnterprise = '__all__'; // '__all__' = aba "Todas"
+let lastPrinters = [];
+let lastEvents = [];
+
+function buildEnterpriseTabs(printers) {
+  const container = document.getElementById('enterprise-tabs');
+
+  // Conta impressoras por instituicao pra mostrar o numero no item da
+  // lista, e monta a lista de nomes unicos (ordem alfabetica).
+  const counts = new Map();
+  printers.forEach(p => {
+    const name = p.EnterpriseName || 'Sem instituicao';
+    counts.set(name, (counts.get(name) || 0) + 1);
+  });
+  const names = [...counts.keys()].sort((a, b) => a.localeCompare(b, 'pt-BR'));
+
+  // Se a instituicao selecionada sumiu do cache (ex: coleta ainda em
+  // andamento), volta pra opcao "Todas" em vez de mostrar uma lista vazia.
+  if (activeEnterprise !== '__all__' && !counts.has(activeEnterprise)) {
+    activeEnterprise = '__all__';
+  }
+
+  const itemClass = (isActive) => isActive
+    ? 'w-full flex items-center justify-between gap-2 px-2.5 py-1.5 rounded-md text-xs font-mono-custom bg-slate-800 text-slate-100 border border-slate-700'
+    : 'w-full flex items-center justify-between gap-2 px-2.5 py-1.5 rounded-md text-xs font-mono-custom text-slate-400 hover:text-slate-200 hover:bg-slate-800/50 border border-transparent';
+
+  const allBtn = `<button data-ent="__all__" class="${itemClass(activeEnterprise === '__all__')}"><span class="truncate">Todas</span><span class="text-slate-500 shrink-0">${fmt(printers.length)}</span></button>`;
+  const tabBtns = names.map(name => {
+    const safe = name.replace(/"/g, '&quot;');
+    return `<button data-ent="${safe}" class="${itemClass(activeEnterprise === name)}" title="${safe}"><span class="truncate">${name}</span><span class="text-slate-500 shrink-0">${fmt(counts.get(name))}</span></button>`;
+  });
+
+  container.innerHTML = allBtn + tabBtns.join('');
+  container.querySelectorAll('button[data-ent]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      activeEnterprise = btn.getAttribute('data-ent');
+      renderPrinters(lastPrinters);
+      renderEvents(lastEvents);
+    });
+  });
+}
+
+function renderPrinters(printers) {
+  lastPrinters = printers;
+  buildEnterpriseTabs(printers);
+
+  const filtered = activeEnterprise === '__all__'
+    ? printers
+    : printers.filter(p => (p.EnterpriseName || 'Sem instituicao') === activeEnterprise);
+
+  const tbody = document.getElementById('printer-rows');
+  const empty = document.getElementById('printers-empty');
+  tbody.innerHTML = '';
+  if (!filtered.length) { empty.classList.remove('hidden'); return; }
+  empty.classList.add('hidden');
+
+  // Mostra offline/suspensas primeiro (mais relevante pra um NOC), mas
+  // SEM cortar a lista - todas as impressoras filtradas sao renderizadas.
+  // A tabela tem scroll proprio (max-h no container pai), entao a
+  // pagina inteira nao fica gigante mesmo com milhares de linhas.
+  const sorted = [...filtered].sort((a, b) => {
+    const rank = p => p.is_online && !p.is_suspended ? 2 : (p.is_suspended ? 1 : 0);
+    return rank(b) - rank(a);
+  });
+
+  const fragment = document.createDocumentFragment();
+  sorted.forEach(p => {
+    const tr = document.createElement('tr');
+    tr.className = 'hover:bg-slate-800/40';
+    let dotColor = 'bg-emerald-400';
+    if (p.is_suspended) dotColor = 'bg-amber-400';
+    else if (!p.is_online) dotColor = 'bg-rose-400';
+    tr.innerHTML = `
+      <td class="px-5 py-2"><span class="inline-block w-2.5 h-2.5 rounded-full ${dotColor}"></span></td>
+      <td class="px-2 py-2">${p.PrinterName || p.name || '—'}</td>
+      <td class="px-2 py-2 text-slate-400">${p.EnterpriseName || '—'}</td>
+      <td class="px-2 py-2 text-slate-400">${p.Location || '—'}</td>
+      <td class="px-2 py-2 text-slate-400 font-mono-custom">${p.ip_address || '—'}</td>
+      <td class="px-5 py-2 text-right font-mono-custom">${fmt(p.total_consumed)}</td>
+    `;
+    fragment.appendChild(tr);
+  });
+  tbody.appendChild(fragment);
+}
+
+function renderEvents(events) {
+  lastEvents = events;
+  const list = document.getElementById('event-list');
+  const empty = document.getElementById('events-empty');
+  list.innerHTML = '';
+
+  // Respeita a mesma instituicao selecionada na lista de impressoras -
+  // antes o feed de eventos ignorava completamente qual filtro estava
+  // ativo e sempre mostrava um recorte global.
+  const filtered = activeEnterprise === '__all__'
+    ? events
+    : events.filter(ev => (ev.EnterpriseName || 'Sem instituicao') === activeEnterprise);
+
+  if (!filtered.length) { empty.classList.remove('hidden'); return; }
+  empty.classList.add('hidden');
+
+  // Ordena por criticidade (CriticalID 1 = mais grave primeiro) e mostra
+  // TODOS os eventos filtrados - sem corte. A lista tem scroll proprio
+  // (max-h no container pai), entao nao trava a pagina mesmo com muitos.
+  const sorted = [...filtered].sort((a, b) => {
+    const rank = ev => ev.CriticalID == 1 ? 0 : ev.CriticalID == 2 ? 1 : 2;
+    return rank(a) - rank(b);
+  });
+
+  sorted.forEach(ev => {
+    const li = document.createElement('li');
+    li.className = 'bg-slate-800/60 rounded px-3 py-2 text-sm flex items-center justify-between gap-2';
+    const level = ev.CriticalID == 1 ? 'bg-rose-400' : ev.CriticalID == 2 ? 'bg-amber-400' : 'bg-sky-400';
+    const ipLabel = ev.ip_address ? ev.ip_address : 'IP desconhecido';
+    li.innerHTML = `
+      <span class="flex items-center gap-2 min-w-0">
+        <span class="w-2 h-2 rounded-full ${level} shrink-0"></span>
+        <span class="min-w-0 truncate">
+          <span class="truncate">${ev.WarningName || 'Evento'}</span>
+          <span class="block text-[11px] text-slate-500 font-mono-custom truncate">${ipLabel}${ev.EnterpriseName ? ' · ' + ev.EnterpriseName : ''}</span>
+        </span>
+      </span>
+      <span class="text-xs text-slate-500 font-mono-custom shrink-0">#${ev.PrinterDeviceID ?? '-'}</span>
+    `;
+    list.appendChild(li);
+  });
+}
+
+// Guarda quais instituicoes estao "abertas" no momento. Como
+// renderStocks() é chamado a cada poll (o innerHTML é recriado do
+// zero toda vez), sem isso o usuario perderia o que abriu/fechou a
+// cada atualizacao automatica da tela.
+const openStockGroups = new Set();
+
+function renderStocks(stocks) {
+  const grid = document.getElementById('stock-grid');
+  const empty = document.getElementById('stocks-empty');
+  grid.innerHTML = '';
+  if (!stocks.length) { empty.classList.remove('hidden'); return; }
+  empty.classList.add('hidden');
+
+  // Agrupa os estoques por instituicao (campo EnterpriseName, montado
+  // no backend) antes de desenhar os cards.
+  const groups = {};
+  stocks.forEach(s => {
+    const groupName = s.EnterpriseName || 'Sem instituicao vinculada';
+    (groups[groupName] = groups[groupName] || []).push(s);
+  });
+  const groupNames = Object.keys(groups).sort((a, b) => a.localeCompare(b, 'pt-BR'));
+
+  groupNames.forEach(groupName => {
+    const items = groups[groupName];
+    const isOpen = openStockGroups.has(groupName);
+
+    const wrapper = document.createElement('div');
+    wrapper.className = 'mb-2';
+
+    const header = document.createElement('button');
+    header.type = 'button';
+    header.className = 'w-full flex items-center gap-2 py-2 text-left group';
+    header.innerHTML = `
+      <svg class="w-3.5 h-3.5 text-slate-500 transition-transform ${isOpen ? 'rotate-90' : ''}" viewBox="0 0 20 20" fill="currentColor">
+        <path fill-rule="evenodd" d="M7.21 14.77a.75.75 0 01.02-1.06L11.168 10 7.23 6.29a.75.75 0 111.04-1.08l4.5 4.25a.75.75 0 010 1.08l-4.5 4.25a.75.75 0 01-1.06-.02z" clip-rule="evenodd" />
+      </svg>
+      <h3 class="text-xs font-semibold uppercase tracking-wider text-slate-300 group-hover:text-slate-100">${groupName}</h3>
+      <span class="text-[10px] font-mono-custom text-slate-600">${items.length} estoque(s)</span>
+      <div class="flex-1 h-px bg-slate-800"></div>
+    `;
+    wrapper.appendChild(header);
+
+    const cardsWrap = document.createElement('div');
+    cardsWrap.className = `grid grid-cols-1 md:grid-cols-3 gap-3 pb-3 ${isOpen ? '' : 'hidden'}`;
+
+    items.forEach(s => {
+      const stockItems = s.Items || [];
+      const card = document.createElement('div');
+      card.className = 'bg-slate-800/50 rounded-lg p-3';
+      const itemRows = stockItems.slice(0, 6).map(it => `
+        <div class="flex justify-between text-xs py-0.5">
+          <span class="text-slate-400 truncate">${it.PartNumber || it.SupplySubFunctionType || 'Item'}</span>
+          <span class="font-mono-custom ${it.Available <= 5 ? 'text-amber-400' : 'text-slate-300'}">${fmt(it.Available)}</span>
+        </div>`).join('');
+      card.innerHTML = `
+        <div class="text-sm font-medium mb-1">${s.StockName || 'Estoque'}</div>
+        <div class="text-xs text-slate-500 mb-2">${stockItems.length} item(ns)</div>
+        ${itemRows || '<div class="text-xs text-slate-600">Sem itens</div>'}
+      `;
+      cardsWrap.appendChild(card);
+    });
+
+    header.addEventListener('click', () => {
+      const nowOpen = cardsWrap.classList.toggle('hidden') === false;
+      header.querySelector('svg').classList.toggle('rotate-90', nowOpen);
+      if (nowOpen) openStockGroups.add(groupName);
+      else openStockGroups.delete(groupName);
+    });
+
+    wrapper.appendChild(cardsWrap);
+    grid.appendChild(wrapper);
+  });
+}
+
+async function loadDashboard() {
+  try {
+    const res = await fetch('/api/dashboard');
+    if (!res.ok) throw new Error('HTTP ' + res.status);
+    const data = await res.json();
+
+    const stats = data.stats || {};
+    document.getElementById('stat-total').textContent = fmt(stats.total);
+    document.getElementById('kpi-online').textContent = fmt(stats.online);
+    document.getElementById('kpi-online-pct').textContent = pct(stats.online, stats.total);
+    document.getElementById('kpi-offline').textContent = fmt(stats.offline);
+    document.getElementById('kpi-offline-pct').textContent = pct(stats.offline, stats.total);
+    document.getElementById('kpi-pages').textContent = fmt(stats.pages_total);
+    document.getElementById('kpi-mono').textContent = fmt(stats.pages_mono);
+    document.getElementById('kpi-color').textContent = fmt(stats.pages_color);
+    document.getElementById('kpi-alerts').textContent = fmt(stats.alerts);
+    document.getElementById('kpi-stocks').textContent = fmt((data.stocks || []).length);
+
+    renderPrinters(data.printers || []);
+    renderEvents(data.events || []);
+    renderStocks(data.stocks || []);
+
+    const banner = document.getElementById('error-banner');
+    if (data.error) {
+      banner.textContent = 'Aviso: a ultima coleta teve um erro (' + data.error + '). Mostrando os ultimos dados validos.';
+      banner.classList.remove('hidden');
+    } else {
+      banner.classList.add('hidden');
+    }
+
+    const progressBanner = document.getElementById('progress-banner');
+    const progress = data.loading_progress || { done: 0, total: 0 };
+    if (data.loading && progress.total > 0) {
+      progressBanner.classList.remove('hidden');
+      document.getElementById('progress-text').textContent = `${progress.done} / ${progress.total} instituicoes`;
+      document.getElementById('progress-bar').style.width = Math.round((progress.done / progress.total) * 100) + '%';
+    } else {
+      progressBanner.classList.add('hidden');
+    }
+
+    document.getElementById('conn-dot').className = 'w-3 h-3 rounded-full bg-emerald-400 pulse-dot';
+    document.getElementById('status-text').textContent = 'Conectado';
+    document.getElementById('last-updated').textContent = data.last_updated
+      ? 'Ultima coleta: ' + new Date(data.last_updated).toLocaleTimeString('pt-BR')
+      : '';
+  } catch (err) {
+    console.error('Falha ao carregar dashboard:', err);
+    document.getElementById('conn-dot').className = 'w-3 h-3 rounded-full bg-rose-400';
+    document.getElementById('status-text').textContent = 'Falha ao conectar com o servidor';
+  }
+}
+
+loadDashboard();
+setInterval(loadDashboard, POLL_INTERVAL_MS);
+</script>
+</body>
+</html>
