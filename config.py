@@ -42,7 +42,10 @@ SOAP_TIMEOUT_SECONDS = int(os.environ.get("SOAP_TIMEOUT_SECONDS", "30"))
 
 # ------------------------------ Polling --------------------------------------
 # Intervalo (em segundos) entre cada ciclo de atualizacao dos dados.
-POLL_INTERVAL_SECONDS = int(os.environ.get("POLL_INTERVAL_SECONDS", "300"))
+# Padrao: 1800s = 30 minutos. A primeira coleta acontece imediatamente
+# quando o servidor sobe (ver _poll_loop em main.py) - esse intervalo so
+# vale pros ciclos seguintes.
+POLL_INTERVAL_SECONDS = int(os.environ.get("POLL_INTERVAL_SECONDS", "1800"))
 
 # Impressora e considerada offline se nao tiver leitura de contador ha
 # mais que N minutos (a API do NDD nao expoe um campo online/offline
