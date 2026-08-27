@@ -75,9 +75,12 @@ def _as_list(result: Any) -> list[dict]:
     return []
 
 
-def _call_general(method_name: str, extra_properties: dict | None = None) -> list[dict]:
-    """Chama um metodo do GeneralData2 (recebe um unico parametro `properties` = JSON string)."""
-    client = _get_zeep_client(config.NDD_GENERAL_WSDL)
+def _call_general(method_name: str, extra_properties: dict | None = None, wsdl_url: str | None = None) -> list[dict]:
+    """Chama um metodo que recebe um unico parametro `properties` = JSON
+    string. Usado tanto pelo GeneralData2 (padrao) quanto pelo OnDemandWS
+    (passando wsdl_url=config.NDD_ONDEMAND_WSDL), que segue o mesmo
+    formato de payload (credenciais + campos extras num JSON so)."""
+    client = _get_zeep_client(wsdl_url or config.NDD_GENERAL_WSDL)
     payload = _credentials()
     if extra_properties:
         payload.update({k: v for k, v in extra_properties.items() if v is not None})
@@ -85,7 +88,7 @@ def _call_general(method_name: str, extra_properties: dict | None = None) -> lis
         raw = getattr(client.service, method_name)(json.dumps(payload))
         return _as_list(_parse_response(raw))
     except Exception as exc:
-        logger.warning("Falha ao chamar GeneralData2.%s: %s", method_name, exc)
+        logger.warning("Falha ao chamar %s.%s: %s", wsdl_url or "GeneralData2", method_name, exc)
         raise
 
 
@@ -302,3 +305,28 @@ def get_open_events() -> list[dict]:
     pending = _call_positional(config.NDD_EVENTS_WSDL, "GetPrintersEvents", 1)
     awaiting = _call_positional(config.NDD_EVENTS_WSDL, "GetPrintersEvents", 2)
     return [*pending, *awaiting]
+
+
+# =============================================================================
+# OnDemandWS — suprimentos ativos (nivel de toner por impressora)
+# =============================================================================
+
+def get_active_supplies() -> list[dict]:
+    """
+    Suprimentos ativos de TODAS as instituicoes de uma vez (nivel de
+    toner/cor por slot de cada impressora), via OnDemandData.Execute
+    com ActionName=RETRIEVEACTIVESUPPLIES.
+
+    Sem informar EnterpriseID/PrinterDeviceID, a API ja devolve os dados
+    de todas as empresas que o usuario tem acesso numa unica chamada -
+    diferente do GetPrinters, que precisa ser uma chamada por instituicao.
+    Cada item retornado e um slot de suprimento (ex: toner preto, cyan,
+    cilindro etc) de uma impressora, com LatestLoadStatus = percentual
+    atual (0-100). O cruzamento com a impressora e feito no main.py via
+    EnterpriseID + PrinterDeviceID (mesmo padrao usado pros contadores).
+    """
+    return _call_general(
+        "Execute",
+        {"ActionName": "RETRIEVEACTIVESUPPLIES"},
+        wsdl_url=config.NDD_ONDEMAND_WSDL,
+    )

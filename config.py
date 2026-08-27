@@ -32,6 +32,11 @@ NDD_COUNTERS_WSDL = os.environ.get(
 NDD_EVENTS_WSDL = os.environ.get(
     "NDD_EVENTS_WSDL", "https://api-events.nddprint.com/EventsWS/EventsData.asmx?wsdl"
 )
+# OnDemandWS - usado hoje so para o nivel de toner/suprimentos
+# (RETRIEVEACTIVESUPPLIES). Endpoint separado do GeneralData2.
+NDD_ONDEMAND_WSDL = os.environ.get(
+    "NDD_ONDEMAND_WSDL", "https://api-general.nddprint.com/OnDemandWS/OnDemandData.asmx?wsdl"
+)
 
 SOAP_TIMEOUT_SECONDS = int(os.environ.get("SOAP_TIMEOUT_SECONDS", "30"))
 

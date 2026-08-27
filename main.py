@@ -158,6 +158,13 @@ def _safe_int(value, default=0):
         return default
 
 
+def _safe_float(value, default=None):
+    try:
+        return float(value)
+    except (TypeError, ValueError):
+        return default
+
+
 def _safe_bool(value) -> bool:
     """A API do NDD pode devolver booleanos como True/False reais ou
     como string 'true'/'false' dependendo do metodo - trata os dois casos."""
@@ -227,6 +234,10 @@ async def _fetch_enterprise_printers(ent: dict) -> list[dict]:
         p["color_consumed"] = 0
         p["total_consumed"] = 0
         p["ip_address"] = _first_present(p, _PRINTER_IP_KEYS)
+        p["toner_level"] = None
+        p["toner_detail"] = []
+        p["fotocondutor_level"] = None
+        p["fotocondutor_detail"] = []
     return printers
 
 
@@ -282,6 +293,68 @@ def _attach_enterprise_to_stock(
 
     stock["EnterpriseName"] = name or "Sem instituicao vinculada"
     return stock
+
+
+# Cada categoria de suprimento que queremos mostrar na aba Toner, com as
+# palavras-chave (case-insensitive, substring) usadas pra reconhecer o
+# SupplySubFunctionTypeName daquele slot. RETRIEVEACTIVESUPPLIES devolve
+# TODOS os tipos de suprimento junto (toner, fotocondutor/cilindro,
+# fusor, coletor de residuo etc) - sem esse filtro por categoria, tudo
+# ficaria misturado num unico "nivel" sem sentido.
+# Pra adicionar um novo suprimento na tela (ex: fusor), so acrescentar
+# uma linha aqui - o resto (merge, coluna na tabela) e generico.
+_SUPPLY_CATEGORIES = {
+    "toner": ("toner",),
+    "fotocondutor": ("fotocondutor", "photoconductor", "drum", "cilindro", "imaging unit", "unidade de imagem"),
+}
+
+
+def _apply_supplies_to_printers(supplies: list[dict], printers: list[dict]) -> None:
+    """Cruza os suprimentos ativos (RETRIEVEACTIVESUPPLIES) com as
+    impressoras ja carregadas em `printers`, preenchendo, pra cada
+    categoria em _SUPPLY_CATEGORIES, os campos "<categoria>_level" (o
+    pior percentual entre os slots daquele tipo, na impressora) e
+    "<categoria>_detail" (percentual por cor/slot, pra detalhar na tela).
+
+    Casa por EnterpriseID+PrinterDeviceID (mesmo _uid usado pros
+    contadores) - cada impressora pode ter varios slots (um por cor,
+    ou um por tipo de suprimento), entao agrupa tudo antes de decidir
+    o pior caso de cada categoria."""
+    printers_by_uid = {p["_uid"]: p for p in printers}
+
+    # by_printer[uid][categoria] = lista de itens daquele tipo, pra essa impressora
+    by_printer: dict[str, dict[str, list[dict]]] = {}
+    for s in supplies:
+        ent_id = _safe_int(s.get("EnterpriseID"), None)
+        device_id = s.get("PrinterDeviceID")
+        if ent_id is None or device_id is None:
+            continue
+        type_name = str(s.get("SupplySubFunctionTypeName") or "").lower()
+        category = next(
+            (cat for cat, keywords in _SUPPLY_CATEGORIES.items() if any(kw in type_name for kw in keywords)),
+            None,
+        )
+        if category is None:
+            continue
+        uid = f"{ent_id}-{device_id}"
+        by_printer.setdefault(uid, {}).setdefault(category, []).append(s)
+
+    for uid, categories in by_printer.items():
+        printer = printers_by_uid.get(uid)
+        if not printer:
+            continue
+        for category, items in categories.items():
+            levels = []
+            detail = []
+            for s in items:
+                pct = _safe_float(s.get("LatestLoadStatus"))
+                if pct is None:
+                    continue
+                levels.append(pct)
+                detail.append({"color": s.get("SupplyColorName") or category.title(), "level": pct})
+            if levels:
+                printer[f"{category}_level"] = min(levels)
+                printer[f"{category}_detail"] = detail
 
 
 def _enrich_events_with_printer_info(events: list[dict], printers: list[dict]) -> list[dict]:
@@ -396,6 +469,7 @@ async def refresh_data() -> None:
         )
         events_task = asyncio.create_task(asyncio.to_thread(ndd_client.get_open_events))
         stocks_task = asyncio.create_task(asyncio.to_thread(ndd_client.get_stocks))
+        supplies_task = asyncio.create_task(asyncio.to_thread(ndd_client.get_active_supplies))
 
         try:
             counters = await counters_task
@@ -447,6 +521,19 @@ async def refresh_data() -> None:
             logger.warning("Falha ao buscar estoque/suprimentos: %s", exc)
             new_stocks = cache["stocks"]  # mantem o estoque anterior em vez de zerar
 
+        try:
+            supplies = await supplies_task
+            if supplies:
+                # DEBUG: mostra os campos que a API devolveu no primeiro
+                # suprimento - util pra confirmar os nomes reais dos campos
+                # de tipo/cor/percentual. Pode remover depois de conferir.
+                logger.info("DEBUG suprimento - campos disponiveis: %s", sorted(supplies[0].keys()))
+            _apply_supplies_to_printers(supplies, new_printers)
+        except Exception as exc:
+            # Nao falha a coleta inteira por causa disso - so deixa
+            # toner_level como None (frontend ja mostra "sem dado").
+            logger.warning("Falha ao buscar nivel de toner (RETRIEVEACTIVESUPPLIES): %s", exc)
+
         # Troca atomica: só agora o novo snapshot completo - impressoras,
         # eventos, contadores E estoque, tudo ja mesclado - substitui o
         # antigo de uma vez. Ate aqui, /api/dashboard servia os dados
@@ -470,10 +557,13 @@ async def refresh_data() -> None:
 
         cache["last_updated"] = datetime.now(timezone.utc).isoformat()
         cache["error"] = None
+        toner_count = sum(1 for p in cache["printers"] if p.get("toner_level") is not None)
+        drum_count = sum(1 for p in cache["printers"] if p.get("fotocondutor_level") is not None)
         logger.info(
-            "Coleta concluida: %d impressoras (%d online), %d eventos, %d estoques",
+            "Coleta concluida: %d impressoras (%d online), %d eventos, %d estoques, "
+            "%d com nivel de toner, %d com nivel de fotocondutor",
             cache["stats"]["total"], cache["stats"]["online"],
-            len(cache["events"]), len(cache["stocks"]),
+            len(cache["events"]), len(cache["stocks"]), toner_count, drum_count,
         )
     except Exception as exc:  # noqa: BLE001
         # Nunca deixa a excecao subir e derrubar o loop/servidor.
