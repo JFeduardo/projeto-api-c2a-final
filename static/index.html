@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>NDD Print · NOC Monitor</title>
+<title>MONITOR DE IMPRESSORAS- C2A</title>
 <script src="https://cdn.tailwindcss.com"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;700&display=swap" rel="stylesheet">
@@ -36,7 +36,7 @@
 <header class="relative z-10 shrink-0 flex items-center justify-between px-7 py-3 border-b border-slate-800 bg-slate-950/60">
   <div class="flex items-center gap-3">
     <span id="conn-dot" class="w-3 h-3 rounded-full bg-slate-600"></span>
-    <h1 class="font-mono-custom text-xl font-bold tracking-wider">NDD PRINT <span class="text-slate-500">/</span> NOC</h1>
+    <h1 class="font-mono-custom text-xl font-bold tracking-wider"> MONITOR DE IMPRESSORAS <span class="text-slate-500">/</span>C2A</h1>
     <span id="view-badge" class="hidden font-mono-custom text-[10px] text-slate-600 border border-slate-800 rounded px-2 py-0.5 uppercase tracking-wider"></span>
   </div>
   <div class="flex items-center gap-10">
@@ -104,26 +104,26 @@
     </div>
     <div class="flex flex-1 min-h-0">
       <!-- Coluna lateral de instituicoes -->
-      <div id="enterprise-tabs" class="w-52 shrink-0 border-r border-slate-800 overflow-y-scroll py-2 px-2 space-y-0.5"></div>
+      <div id="enterprise-tabs" class="w-44 shrink-0 border-r border-slate-800 overflow-y-scroll py-2 px-2 space-y-0.5"></div>
       <!-- Tabela de impressoras -->
-      <div class="flex-1 min-h-0 overflow-auto">
+      <div class="flex-1 min-h-0 overflow-y-auto overflow-x-hidden">
         <table class="w-full text-sm table-fixed">
           <colgroup>
-            <col class="w-16">
-            <col class="w-[26%]">
+            <col class="w-14">
+            <col class="w-[22%]">
+            <col class="w-[15%]">
             <col class="w-[13%]">
-            <col class="w-[17%]">
-            <col class="w-[23%]">
+            <col class="w-[27%]">
             <col class="w-[13%]">
           </colgroup>
           <thead class="sticky top-0 bg-slate-900 text-slate-500 text-xs uppercase tracking-wider">
             <tr>
-              <th class="text-left font-medium px-3 py-2 whitespace-nowrap overflow-hidden">Status</th>
-              <th class="text-left font-medium px-2 py-2 whitespace-nowrap overflow-hidden">Nome</th>
-              <th class="text-left font-medium px-2 py-2 whitespace-nowrap overflow-hidden">Instituicao</th>
-              <th class="text-left font-medium px-2 py-2 whitespace-nowrap overflow-hidden">Local</th>
-              <th class="text-left font-medium px-2 py-2 whitespace-nowrap overflow-hidden">IP / Serial</th>
-              <th class="text-right font-medium px-3 py-2 whitespace-nowrap overflow-hidden">Paginas (hoje)</th>
+              <th class="text-left font-medium px-3 py-2 whitespace-nowrap">Status</th>
+              <th class="text-left font-medium px-2 py-2 whitespace-nowrap">Nome</th>
+              <th class="text-left font-medium px-2 py-2 whitespace-nowrap">Instituicao</th>
+              <th class="text-left font-medium px-2 py-2 whitespace-nowrap">Local</th>
+              <th class="text-left font-medium px-2 py-2 whitespace-nowrap">IP / Serial</th>
+              <th class="text-right font-medium px-3 py-2 whitespace-nowrap">Paginas (hoje)</th>
             </tr>
           </thead>
           <tbody id="printer-rows" class="divide-y divide-slate-800/60"></tbody>
@@ -149,27 +149,27 @@
     <div class="flex flex-1 min-h-0 mt-2">
       <!-- Coluna lateral de instituicoes - mesmo comportamento e mesma
            selecao (activeEnterprise) da aba Impressoras. -->
-      <div id="enterprise-tabs-toner" class="w-52 shrink-0 border-r border-slate-800 overflow-y-scroll py-2 px-2 space-y-0.5"></div>
-      <div class="flex-1 min-h-0 overflow-auto">
+      <div id="enterprise-tabs-toner" class="w-44 shrink-0 border-r border-slate-800 overflow-y-scroll py-2 px-2 space-y-0.5"></div>
+      <div class="flex-1 min-h-0 overflow-y-auto overflow-x-hidden">
         <table class="w-full text-sm table-fixed">
           <colgroup>
-            <col class="w-16">
-            <col class="w-[21%]">
-            <col class="w-[11%]">
-            <col class="w-[14%]">
-            <col class="w-[20%]">
-            <col class="w-[11%]">
-            <col class="w-[11%]">
+            <col class="w-14">
+            <col class="w-[15%]">
+            <col class="w-[10%]">
+            <col class="w-[9%]">
+            <col class="w-[19%]">
+            <col class="w-[24%]">
+            <col class="w-[18%]">
           </colgroup>
           <thead class="sticky top-0 bg-slate-900 text-slate-500 text-xs uppercase tracking-wider">
             <tr>
-              <th class="text-left font-medium px-3 py-2 whitespace-nowrap overflow-hidden">Status</th>
-              <th class="text-left font-medium px-2 py-2 whitespace-nowrap overflow-hidden">Nome</th>
-              <th class="text-left font-medium px-2 py-2 whitespace-nowrap overflow-hidden">Instituicao</th>
-              <th class="text-left font-medium px-2 py-2 whitespace-nowrap overflow-hidden">Local</th>
-              <th class="text-left font-medium px-2 py-2 whitespace-nowrap overflow-hidden">IP / Serial</th>
-              <th class="text-left font-medium px-2 py-2 whitespace-nowrap overflow-hidden">Toner</th>
-              <th class="text-left font-medium px-2 py-2 whitespace-nowrap overflow-hidden">Fotocondutor</th>
+              <th class="text-left font-medium px-3 py-2 whitespace-nowrap">Status</th>
+              <th class="text-left font-medium px-2 py-2 whitespace-nowrap">Nome</th>
+              <th class="text-left font-medium px-2 py-2 whitespace-nowrap">Instituicao</th>
+              <th class="text-left font-medium px-2 py-2 whitespace-nowrap">Local</th>
+              <th class="text-left font-medium px-2 py-2 whitespace-nowrap">IP / Serial</th>
+              <th class="text-left font-medium px-2 py-2 whitespace-nowrap">Toner</th>
+              <th class="text-left font-medium px-2 py-2 whitespace-nowrap">Fotocondutor</th>
             </tr>
           </thead>
           <tbody id="toner-rows" class="divide-y divide-slate-800/60"></tbody>
@@ -340,13 +340,13 @@ function _renderEnterpriseSidebar(containerId, totalCount, counts, names, onSele
   if (!container) return;
 
   const itemClass = (isActive) => isActive
-    ? 'w-full flex items-center justify-between gap-2 px-2.5 py-1.5 rounded-md text-xs font-mono-custom bg-slate-800 text-slate-100 border border-slate-700'
-    : 'w-full flex items-center justify-between gap-2 px-2.5 py-1.5 rounded-md text-xs font-mono-custom text-slate-400 hover:text-slate-200 hover:bg-slate-800/50 border border-transparent';
+    ? 'w-full flex items-start justify-between gap-2 px-2.5 py-1.5 rounded-md text-xs font-mono-custom bg-slate-800 text-slate-100 border border-slate-700'
+    : 'w-full flex items-start justify-between gap-2 px-2.5 py-1.5 rounded-md text-xs font-mono-custom text-slate-400 hover:text-slate-200 hover:bg-slate-800/50 border border-transparent';
 
-  const allBtn = `<button data-ent="__all__" class="${itemClass(activeEnterprise === '__all__')}"><span class="truncate">Todas</span><span class="text-slate-500 shrink-0">${fmt(totalCount)}</span></button>`;
+  const allBtn = `<button data-ent="__all__" class="${itemClass(activeEnterprise === '__all__')}"><span class="break-words text-left">Todas</span><span class="text-slate-500 shrink-0">${fmt(totalCount)}</span></button>`;
   const tabBtns = names.map(name => {
     const safe = name.replace(/"/g, '&quot;');
-    return `<button data-ent="${safe}" class="${itemClass(activeEnterprise === name)}" title="${safe}"><span class="truncate">${name}</span><span class="text-slate-500 shrink-0">${fmt(counts.get(name))}</span></button>`;
+    return `<button data-ent="${safe}" class="${itemClass(activeEnterprise === name)}" title="${safe}"><span class="break-words text-left">${name}</span><span class="text-slate-500 shrink-0">${fmt(counts.get(name))}</span></button>`;
   });
 
   container.innerHTML = allBtn + tabBtns.join('');
@@ -397,10 +397,10 @@ function renderPrinters(printers) {
     const serial = p.SerialNumber || '—';
     tr.innerHTML = `
       <td class="px-3 py-2"><span class="inline-block w-2.5 h-2.5 rounded-full ${dotColor}"></span></td>
-      <td class="px-2 py-2 truncate" title="${name}">${name}</td>
-      <td class="px-2 py-2 text-slate-400 truncate" title="${enterprise}">${enterprise}</td>
-      <td class="px-2 py-2 text-slate-400 truncate" title="${local}">${local}</td>
-      <td class="px-2 py-2 text-slate-400 font-mono-custom truncate" title="${ip} · ${serial}">${ip}<span class="text-slate-600"> · </span><span class="text-slate-500">${serial}</span></td>
+      <td class="px-2 py-2 break-words align-top" title="${name}">${name}</td>
+      <td class="px-2 py-2 text-slate-400 break-words align-top" title="${enterprise}">${enterprise}</td>
+      <td class="px-2 py-2 text-slate-400 break-words align-top" title="${local}">${local}</td>
+      <td class="px-2 py-2 text-slate-400 font-mono-custom align-top" title="${ip} · ${serial}"><div class="break-all">${ip}</div><div class="break-all text-slate-500">${serial}</div></td>
       <td class="px-3 py-2 text-right font-mono-custom">${fmt(p.total_consumed)}</td>
     `;
     fragment.appendChild(tr);
@@ -465,10 +465,10 @@ function renderToner(printers) {
     const drumCell = _supplyLevelCell(p.fotocondutor_level, p.fotocondutor_detail);
     tr.innerHTML = `
       <td class="px-3 py-2"><span class="inline-block w-2.5 h-2.5 rounded-full ${dotColor}"></span></td>
-      <td class="px-2 py-2 truncate" title="${name}">${name}</td>
-      <td class="px-2 py-2 text-slate-400 truncate" title="${enterprise}">${enterprise}</td>
-      <td class="px-2 py-2 text-slate-400 truncate" title="${local}">${local}</td>
-      <td class="px-2 py-2 text-slate-400 font-mono-custom truncate" title="${ip} · ${serial}">${ip}<span class="text-slate-600"> · </span><span class="text-slate-500">${serial}</span></td>
+      <td class="px-2 py-2 break-words align-top" title="${name}">${name}</td>
+      <td class="px-2 py-2 text-slate-400 break-words align-top" title="${enterprise}">${enterprise}</td>
+      <td class="px-2 py-2 text-slate-400 break-words align-top" title="${local}">${local}</td>
+      <td class="px-2 py-2 text-slate-400 font-mono-custom align-top" title="${ip} · ${serial}"><div class="break-all">${ip}</div><div class="break-all text-slate-500">${serial}</div></td>
       <td class="px-2 py-2">${tonerCell}</td>
       <td class="px-2 py-2">${drumCell}</td>
     `;
@@ -477,18 +477,62 @@ function renderToner(printers) {
   tbody.appendChild(fragment);
 }
 
-// Monta a celula de percentual (toner ou fotocondutor) com cor de
-// alerta e o detalhe por cor/slot no tooltip. Reaproveitada pelas duas
-// colunas em renderToner - a logica de exibicao e identica, so muda
-// qual par level/detail e passado.
+// Monta a celula de percentual (toner ou fotocondutor). Se a impressora
+// tiver mais de um slot daquele suprimento (ex: toner colorido com K/C/M/Y),
+// mostra CADA cor separada com seu proprio percentual e cor de alerta -
+// nao so o pior caso resumido. Com um slot so (impressora mono, ou so um
+// cilindro), mostra um numero direto sem rotulo.
 function _supplyLevelCell(level, detail) {
   if (level === undefined || level === null) {
     return '<span class="text-slate-600 text-xs">sem dado</span>';
   }
-  const rounded = Math.round(level);
-  const levelColor = rounded <= 10 ? 'text-rose-400' : rounded <= 25 ? 'text-amber-400' : 'text-slate-200';
-  const detailText = (detail || []).map(d => `${d.color}: ${Math.round(d.level)}%`).join(' · ');
-  return `<span class="font-mono-custom ${levelColor}" title="${detailText || ''}">${rounded}%</span>`;
+
+  // Mantem so os slots com cor de toner reconhecida (Preto/Ciano/Magenta/
+  // Amarelo). Qualquer suprimento sem cor valida vindo cru da API do NDD
+  // (cinta, fusor, coletor de residuo, "N/A" etc.) e descartado aqui em
+  // vez de virar uma letra fantasma pelo fallback de _abbrevColorLabel.
+  const knownDetail = (detail || []).filter(d => _isKnownTonerColor(d.color));
+
+  if (!knownDetail.length) {
+    const rounded = Math.round(level);
+    return `<span class="font-mono-custom ${_levelColorClass(rounded)}">${rounded}%</span>`;
+  }
+  const chips = knownDetail.map(d => {
+    const rounded = Math.round(d.level);
+    const label = _abbrevColorLabel(d.color);
+    return `<span class="font-mono-custom ${_levelColorClass(rounded)}" title="${d.color}">${label ? label + ' ' : ''}${rounded}%</span>`;
+  });
+  return `<span class="inline-flex flex-wrap items-center gap-x-2 gap-y-0.5">${chips.join('')}</span>`;
+}
+
+function _levelColorClass(pct) {
+  return pct <= 10 ? 'text-rose-400' : pct <= 25 ? 'text-amber-400' : 'text-slate-200';
+}
+
+// Abrevia o nome da cor (quando reconhecido) pra caber varias lado a lado
+// sem estourar a coluna - "Preto"/"Black" -> "K", "Ciano"/"Cyan" -> "C" etc.
+// Nomes nao reconhecidos usam so a primeira letra como fallback.
+function _abbrevColorLabel(name) {
+  if (!name) return '';
+  const n = name.toLowerCase();
+  if (n.includes('preto') || n.includes('black') || n === 'k') return 'P';
+  if (n.includes('ciano') || n.includes('cian') || n.includes('cyan') || n === 'c') return 'C';
+  if (n.includes('magenta') || n === 'm') return 'M';
+  if (n.includes('amarelo') || n.includes('yellow') || n === 'y') return 'A';
+  return name.trim().slice(0, 1).toUpperCase();
+}
+
+// Verifica se a cor e uma das 4 conhecidas (K/C/M/Y). Diferente de
+// _abbrevColorLabel, essa NAO tem fallback pra primeira letra - serve so
+// pra filtrar suprimentos sem cor de toner de verdade (cinta, fusor,
+// coletor de residuo, "N/A" etc vindos crus da API do NDD).
+function _isKnownTonerColor(name) {
+  if (!name) return false;
+  const n = name.toLowerCase();
+  return n.includes('preto') || n.includes('black') || n === 'k'
+      || n.includes('ciano') || n.includes('cian') || n.includes('cyan') || n === 'c'
+      || n.includes('magenta') || n === 'm'
+      || n.includes('amarelo') || n.includes('yellow') || n === 'y';
 }
 
 async function loadDashboard() {

@@ -304,7 +304,12 @@ def _attach_enterprise_to_stock(
 # Pra adicionar um novo suprimento na tela (ex: fusor), so acrescentar
 # uma linha aqui - o resto (merge, coluna na tabela) e generico.
 _SUPPLY_CATEGORIES = {
-    "toner": ("toner",),
+    # "ink cartridge" cobre impressoras inkjet (ex: Epson WorkForce), que
+    # reportam o consumivel de impressao como "Ink Cartridge" em vez de
+    # "Toner Cartridge". Usamos a frase completa (nao so "ink") pra nao
+    # capturar por engano o "Waste Ink" (coletor de residuo, sem relacao
+    # com nivel de tinta/toner de impressao).
+    "toner": ("toner", "ink cartridge"),
     "fotocondutor": ("fotocondutor", "photoconductor", "drum", "cilindro", "imaging unit", "unidade de imagem"),
 }
 
